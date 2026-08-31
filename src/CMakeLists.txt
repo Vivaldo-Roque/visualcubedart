@@ -32,3 +32,20 @@ if (ANDROID)
   # Support Android 15 16k page size
   target_link_options(visualcubedart PRIVATE "-Wl,-z,max-page-size=16384")
 endif()
+
+if (NOT ANDROID AND NOT IOS)
+  add_executable(visualcubedart_native_tests
+    "tests/test_visualcubedart.cpp"
+    "ffi.cpp"
+    "visualcubecpp_src/facelet.cpp"
+    "visualcubecpp_src/renderer.cpp"
+    "visualcubecpp_src/image_export.cpp"
+    "visualcubecpp_src/visualcube.cpp"
+  )
+  target_include_directories(visualcubedart_native_tests
+    PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/visualcubecpp_include
+      ${CMAKE_CURRENT_SOURCE_DIR}/visualcubecpp_third_party
+  )
+endif()
+
