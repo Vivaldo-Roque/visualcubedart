@@ -2,6 +2,9 @@ import 'dart:ffi';
 import 'dart:io';
 import 'package:ffi/ffi.dart';
 
+export 'src/arrow_utils.dart';
+export 'src/cube_simulator.dart';
+
 const String _libName = 'visualcubedart';
 
 final DynamicLibrary _dylib = () {
@@ -12,7 +15,23 @@ final DynamicLibrary _dylib = () {
     return DynamicLibrary.open('lib$_libName.so');
   }
   if (Platform.isWindows) {
-    return DynamicLibrary.open('$_libName.dll');
+    const dllName = '$_libName.dll';
+    final candidates = [
+      dllName,
+      '../../$dllName',
+      '../$dllName',
+      'build/windows_x64/shared/Debug/$dllName',
+      'build/windows_x64/shared/Release/$dllName',
+      '../build/windows_x64/shared/Debug/$dllName',
+    ];
+    for (final path in candidates) {
+      if (File(path).existsSync()) {
+        try {
+          return DynamicLibrary.open(File(path).absolute.path);
+        } catch (_) {}
+      }
+    }
+    return DynamicLibrary.open(dllName);
   }
   throw UnsupportedError('Unknown platform: ${Platform.operatingSystem}');
 }();
