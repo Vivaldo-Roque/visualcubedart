@@ -12,7 +12,6 @@
 #include "visualcube/renderer.hpp"
 #include "visualcube/image_export.hpp"
 
-#include <regex>
 #include <fstream>
 #include <iostream>
 #include <cstdio>
@@ -27,15 +26,32 @@ namespace vc {
 
 void parse_rotation(const std::string& r_str, Config& cfg) {
     cfg.rotation.clear();
-    // Match [xyz] followed by optional '-' and digits
-    std::regex re("([xyz])(-?[0-9]{1,3})");
-    auto begin = std::sregex_iterator(r_str.begin(), r_str.end(), re);
-    auto end   = std::sregex_iterator();
-    for (auto it = begin; it != end; ++it) {
-        std::smatch m = *it;
-        int axis = (m[1].str()[0] == 'x') ? 0 : (m[1].str()[0] == 'y') ? 1 : 2;
-        int deg  = std::stoi(m[2].str());
-        cfg.rotation.push_back({ axis, deg });
+    // Direct O(N) character parser: match [xyz] followed by optional '-' and 1-3 digits
+    const size_t n = r_str.size();
+    size_t i = 0;
+    while (i < n) {
+        char c = r_str[i];
+        if (c == 'x' || c == 'y' || c == 'z') {
+            int axis = (c == 'x') ? 0 : (c == 'y') ? 1 : 2;
+            ++i;
+            bool neg = false;
+            if (i < n && r_str[i] == '-') {
+                neg = true;
+                ++i;
+            }
+            int deg = 0;
+            int digits = 0;
+            while (i < n && std::isdigit(static_cast<unsigned char>(r_str[i])) && digits < 3) {
+                deg = deg * 10 + (r_str[i] - '0');
+                ++i;
+                ++digits;
+            }
+            if (digits > 0) {
+                cfg.rotation.push_back({ axis, neg ? -deg : deg });
+            }
+        } else {
+            ++i;
+        }
     }
 }
 
