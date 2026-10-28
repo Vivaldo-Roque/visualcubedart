@@ -147,13 +147,14 @@ static std::string polygon_svg(const Vec3& p1, const Vec3& p2,
                                const Vec3& p3, const Vec3& p4,
                                const std::string& fill, const std::string& stroke,
                                bool transparent) {
+    if (transparent) return "";
     std::string s = "\t\t<polygon fill='#";
-    s += (transparent ? "000000" : fill);
-    s += "' stroke='#";
-    s += stroke;
-    s += "' ";
-    if (transparent) s += "opacity='0' ";
-    s += "points='";
+    s += fill;
+    if (!stroke.empty()) {
+        s += "' stroke='#";
+        s += stroke;
+    }
+    s += "' points='";
     s += fmt_pt(p1) + " " + fmt_pt(p2) + " " + fmt_pt(p3) + " " + fmt_pt(p4);
     s += "'/>\n";
     return s;
@@ -253,11 +254,11 @@ std::string render_svg(
     };
 
     auto gen_facelet_svg = [&](const Vec3& p1, const Vec3& p2,
-                               const Vec3& p3, const Vec3& p4, int seq) -> std::string {
+                               const Vec3& p3, const Vec3& p4, int seq, bool with_stroke) -> std::string {
         std::string col = facelet_color(seq);
         bool transparent = (col == "t");
         if (transparent) col = "000000";
-        return polygon_svg(p1, p2, p3, p4, col, cfg.cc, transparent);
+        return polygon_svg(p1, p2, p3, p4, col, with_stroke ? cfg.cc : "", transparent);
     };
 
     auto facelet_svg = [&](int fc) -> std::string {
@@ -273,7 +274,7 @@ std::string render_svg(
                 Vec3 p2 = trans_scale(p[fc][j+1][i  ], cf, 0.85f);
                 Vec3 p3 = trans_scale(p[fc][j+1][i+1], cf, 0.85f);
                 Vec3 p4 = trans_scale(p[fc][j  ][i+1], cf, 0.85f);
-                svg += gen_facelet_svg(p1, p2, p3, p4, fc * dim * dim + i * dim + j);
+                svg += gen_facelet_svg(p1, p2, p3, p4, fc * dim * dim + i * dim + j, sw > 0.0f);
             }
         }
         return svg;
@@ -291,10 +292,10 @@ std::string render_svg(
                 0
             };
             Vec3 p1 = translate(trans_scale(p[fc][j  ][i  ], cf, 0.94f), tv1);
-            Vec3 p2 = translate(trans_scale(p[fc][j+1][i  ], cf, 0.94f), tv1);
+            Vec3 p2 = translate(trans_scale(p[fc][j+1][i  ], cf, 0.94f), cf.x == cf.x ? tv1 : tv1);
             Vec3 p3 = translate(trans_scale(p[fc][j+1][i+1], cf, 0.94f), tv2);
             Vec3 p4 = translate(trans_scale(p[fc][j  ][i+1], cf, 0.94f), tv2);
-            svg += gen_facelet_svg(p1, p2, p3, p4, fc * dim * dim + i * dim + j);
+            svg += gen_facelet_svg(p1, p2, p3, p4, fc * dim * dim + i * dim + j, true);
         }
         return svg;
     };
@@ -392,23 +393,26 @@ std::string render_svg(
     }
 
     // Outlines for visible faces
-    svg << "\t<g style='stroke-width:0.1;stroke-linejoin:round;opacity:"
-        << fmt_f(co_frac) << "'>\n";
+    svg << "\t<g style='stroke-width:0.1;stroke-linejoin:round";
+    if (cfg.co < 100) svg << ";opacity:" << fmt_f(co_frac);
+    svg << "'>\n";
     for (int ri = 3; ri < 6; ++ri)
         if (face_visible(ro[ri]) || cfg.co < 100) svg << outline_svg(ro[ri]);
     svg << "\t</g>\n";
 
     // Facelets for visible faces
-    svg << "\t<g style='opacity:" << fmt_f(fo_frac)
-        << ";stroke-opacity:0.5;stroke-width:" << fmt_f(sw) << ";stroke-linejoin:round'>\n";
+    svg << "\t<g";
+    if (cfg.fo < 100) svg << " style='opacity:" << fmt_f(fo_frac) << "'";
+    svg << ">\n";
     for (int ri = 3; ri < 6; ++ri)
         if (face_visible(ro[ri]) || cfg.co < 100) svg << facelet_svg(ro[ri]);
     svg << "\t</g>\n";
 
     // OLL/plan view guides
     if (cfg.view == View::Plan) {
-        svg << "\t<g style='opacity:" << fmt_f(fo_frac)
-            << ";stroke-opacity:1;stroke-width:0.02;stroke-linejoin:round'>\n";
+        svg << "\t<g style='stroke-width:0.02;stroke-linejoin:round";
+        if (cfg.fo < 100) svg << ";opacity:" << fmt_f(fo_frac);
+        svg << "'>\n";
         for (int fc : {F, L, B, R}) svg << oll_svg(fc);
         svg << "\t</g>\n";
     }
@@ -416,8 +420,7 @@ std::string render_svg(
     // Arrows
     if (!arrows.empty()) {
         float awidth = 0.12f / dim;
-        svg << "\t<g style='opacity:1;stroke-opacity:1;stroke-width:"
-            << fmt_f(awidth) << ";stroke-linecap:round'>\n";
+        svg << "\t<g style='stroke-width:" << fmt_f(awidth) << ";stroke-linecap:round'>\n";
         for (const auto& a : arrows) svg << gen_arrow_svg(a);
         svg << "\t</g>\n";
     }
