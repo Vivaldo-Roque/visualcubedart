@@ -43,7 +43,7 @@ struct Config {
     View view = View::Normal;
 
     // Background color (6-digit hex, empty = transparent)
-    std::string bg = "FFFFFF";
+    std::string bg = "";
 
     // Cube body color (6-digit hex)
     std::string cc = "000000";

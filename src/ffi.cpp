@@ -45,7 +45,16 @@ FFI_EXPORT const char* generate_cube_svg(
             else cfg.view = vc::View::Normal;
         }
 
-        if (bg) cfg.bg = bg;
+        if (bg) {
+            std::string s(bg);
+            if (s == "t" || s == "00000000" || s.empty()) {
+                cfg.bg = "";
+            } else {
+                cfg.bg = s;
+            }
+        } else {
+            cfg.bg = "";
+        }
         if (cc) cfg.cc = cc;
         cfg.co = co;
         cfg.fo = fo;
