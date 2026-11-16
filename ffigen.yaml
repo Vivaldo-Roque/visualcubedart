@@ -5,6 +5,9 @@ description: |
 
   Regenerate bindings with `dart run ffigen --config ffigen.yaml`.
 output: 'lib/visualcubedart_bindings_generated.dart'
+# Generate `@Native` externals resolved through Native Assets (hook/build.dart).
+ffi-native:
+  asset-id: 'package:visualcubedart/visualcubedart.dart'
 headers:
   entry-points:
     - 'src/visualcubedart.h'

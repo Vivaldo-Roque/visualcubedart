@@ -1,17 +1,20 @@
 name: visualcubedart
-description: "A new Flutter FFI plugin project."
-version: 0.0.1
+description: "A Dart FFI package (Native Assets) wrapping VisualCube C++ for 2D Rubik's Cube SVG rendering."
+version: 0.1.0
 homepage:
 
 environment:
   sdk: ^3.11.4
-  flutter: '>=3.3.0'
+  flutter: '>=3.38.0'
 
 dependencies:
   flutter:
     sdk: flutter
-  plugin_platform_interface: ^2.0.2
   ffi: ^2.1.3
+  # Native Assets build hook (hook/build.dart).
+  code_assets: '>=1.0.0 <3.0.0'
+  hooks: ^2.0.0
+  native_toolchain_c: ^0.19.2
 
 dev_dependencies:
   ffigen: ^20.1.1
@@ -19,16 +22,5 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
 
-flutter:
-  plugin:
-    platforms:
-      android:
-        ffiPlugin: true
-      ios:
-        ffiPlugin: true
-      macos:
-        ffiPlugin: true
-      windows:
-        ffiPlugin: true
-      linux:
-        ffiPlugin: true
+# Native code is compiled by hook/build.dart (Native Assets), so this package
+# is no longer declared as an `ffiPlugin`.
